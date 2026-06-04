@@ -307,13 +307,8 @@ async function likeLevel(id) {
     let likedLevels = JSON.parse(localStorage.getItem("liked_levels")) || [];
 
     if (likedLevels.includes(id)) {
-        const userChoice = confirm("Liking an obby twice could delete other obbies. Do you really want to do that?");
-        if (userChoice) {
-            window.location.href = "https://www.youtube.com/watch?v=6VMRAGxjOoA&pp=ygUYY3JlZXB5IHZpZGVvcyBvbiB5b3V0dWJl0gcJCSgLAYcqIYzv"
-            return;
-        } else {
-            return;
-        }
+        alert("you cannot")
+        return;
     }
     const { data: currentLevel, error: fetchError } = await supabaseClient
         .from("levels")
