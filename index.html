@@ -65,7 +65,6 @@ hr {
     margin: 30px 0;
 }
 
-
 .main-layout {
     display: flex;
     gap: 40px;
@@ -118,7 +117,7 @@ hr {
     background: #e5e5e5;
 }
 
-/* Star styling */
+
 .star-btn {
     background: #fffbe6 !important;
     border-color: #ffe58f !important;
@@ -162,7 +161,8 @@ hr {
         <div id="levels"></div>
     </div>
 
-    <div class="leaderboard-column">leaderboard thingy</h2>
+    <div class="leaderboard-column">
+        <h2>leaderboard thingy</h2>
         <ul id="leaderboard" class="leaderboard-list"></ul>
     </div>
 </div>
@@ -248,10 +248,11 @@ async function loadLevels() {
         const item = document.createElement("div");
         item.className = "level";
 
+        
         item.innerHTML = `
             <h3>${level.title}</h3>
             <div class="action-buttons">
-                <button class="star-btn" onclick="likeLevel(${level.id}, ${currentStars})">⭐ ${currentStars}</button>
+                <button class="star-btn" onclick="likeLevel(${level.id})">⭐ ${starsCount}</button>
                 <button onclick="downloadLevel(${level.id})">download ts</button>
             </div>
         `;
@@ -323,6 +324,7 @@ async function loadLeaderboard() {
         list.appendChild(item);
     });
 }
+
 async function downloadLevel(id) {
     const { data, error } = await supabaseClient
         .from("levels")
