@@ -151,6 +151,16 @@ async function downloadLevel(id) {
 }
 
 loadLevels();
+    <input type="file" id="fileInput">
+<p id="text"></p>
+
+<script>
+document.getElementById("fileInput")
+.addEventListener("change", (e) => {
+    document.getElementById("text")
+    .innerText = e.target.files[0].name;
+});
+</script>
 
 </script>
 
