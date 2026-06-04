@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>orporporp</title>
+<title>Obby Revival Site</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -145,25 +145,25 @@ hr {
 
 <body>
 
-<h1>orporporp ssite</h1>
+<h1>Obby Revival Project Hub</h1>
 
 <input id="title" placeholder="title" type="text">
 <input type="file" id="fileInput" accept=".json">
 <p id="fileName"></p>
 
-<button onclick="uploadLevel()">upload</button>
+<button onclick="uploadLevel()">Upload Level</button>
 
 <hr>
 
 <div class="main-layout">
     <div class="feed-column">
         <h2>obbies</h2>
-        <input id="searchBar" class="search-input" placeholder="find ur obby here ig" type="text" oninput="filterLevels()">
+        <input id="searchBar" class="search-input" placeholder="Search for serious obbies here." type="text" oninput="filterLevels()">
         <div id="levels"></div>
     </div>
 
     <div class="leaderboard-column">
-        <h2>leaderboard thingy</h2>
+        <h2>Leaderboard.</h2>
         <ul id="leaderboard" class="leaderboard-list"></ul>
     </div>
 </div>
@@ -194,7 +194,7 @@ async function uploadLevel() {
     const file = document.getElementById("fileInput").files[0];
 
     if (!file) {
-        alert("choose file bruh");
+        alert("choose file please serious chuds");
         return;
     }
 
@@ -204,7 +204,7 @@ async function uploadLevel() {
     try {
         jsonData = JSON.parse(text);
     } catch (err) {
-        alert("invalid...");
+        alert("invalid...serious chuds");
         return;
     }
 
@@ -231,7 +231,7 @@ async function uploadLevel() {
         return;
     }
 
-    alert("uploaded chuds");
+    alert("uploaded serious chuds");
     
     document.getElementById("title").value = "";
     document.getElementById("fileInput").value = "";
@@ -261,7 +261,7 @@ function renderLevelsList(levelsToRender) {
     div.innerHTML = "";
 
     if (levelsToRender.length === 0) {
-        div.innerHTML = `<p style="color: #888; font-size: 14px; text-align: center; margin-top: 20px;">no obbies found bruh</p>`;
+        div.innerHTML = `<p style="color: #888; font-size: 14px; text-align: center; margin-top: 20px;">no obbies found...</p>`;
         return;
     }
 
@@ -282,7 +282,7 @@ function renderLevelsList(levelsToRender) {
             <h3>${level.title} <span style="font-size: 12px; color: #888; margin-left: 5px;">(${sizeDisplay})</span></h3>
             <div class="action-buttons">
                 <button class="star-btn" onclick="likeLevel(${level.id})">⭐ ${starsCount}</button>
-                <button onclick="downloadLevel(${level.id})">download ts</button>
+                <button onclick="downloadLevel(${level.id})">Download</button>
             </div>
         `;
 
@@ -306,7 +306,7 @@ async function likeLevel(id) {
     let likedLevels = JSON.parse(localStorage.getItem("liked_levels")) || [];
 
     if (likedLevels.includes(id)) {
-        alert("haha no star farm u loser lololololololol")
+        alert("Dear my epic serious chuds. You cannot star an obby twice. If you continue, I will find your house and force you to beat Bloodbath. Please do not do that again.")
         return;
     }
     const { data: currentLevel, error: fetchError } = await supabaseClient
