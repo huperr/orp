@@ -145,7 +145,7 @@ hr {
 
 <body>
 
-<h1>orporporp</h1>
+<h1>orporporp ssite</h1>
 
 <input id="title" placeholder="title" type="text">
 <input type="file" id="fileInput" accept=".json">
@@ -175,9 +175,15 @@ const SUPABASE_KEY = "sb_publishable_7YyiJgIDTOjN8Ne7G6avcQ_aGswLuaD";
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+
 document.getElementById("fileInput").addEventListener("change", (e) => {
     if (e.target.files.length > 0) {
-        document.getElementById("fileName").innerText = e.target.files[0].name;
+        const file = e.target.files[0];
+        const sizeStr = file.size < 1024 
+            ? file.size + " B" 
+            : (file.size / 1024).toFixed(1) + " KB";
+            
+        document.getElementById("fileName").innerText = `${file.name} (${sizeStr})`;
     } else {
         document.getElementById("fileName").innerText = "";
     }
@@ -252,11 +258,19 @@ async function loadLevels() {
         const starsCount = level.stars || 0;
         const item = document.createElement("div");
         item.className = "level";
-        const sizeDisplay = level.file_size ? `(${level.file_size})` : '';
-
         
+  
+        let sizeDisplay = "";
+        if (level.file_size) {
+            sizeDisplay = level.file_size;
+        } else if (level.data) {
+            const rawLength = JSON.stringify(level.data).length;
+            sizeDisplay = rawLength < 1024 ? rawLength + " B" : (rawLength / 1024).toFixed(1) + " KB";
+        }
+
+
         item.innerHTML = `
-            <h3>${level.title}</h3>
+            <h3>${level.title} <span style="font-size: 12px; color: #888; margin-left: 5px;">(${sizeDisplay})</span></h3>
             <div class="action-buttons">
                 <button class="star-btn" onclick="likeLevel(${level.id})">⭐ ${starsCount}</button>
                 <button onclick="downloadLevel(${level.id})">download ts</button>
@@ -266,7 +280,6 @@ async function loadLevels() {
         div.appendChild(item);
     });
 
-    
     loadLeaderboard();
 }
 
@@ -316,10 +329,6 @@ async function likeLevel(id) {
     likedLevels.push(id);
     localStorage.setItem("liked_levels", JSON.stringify(likedLevels));
 
-    
-    console.log("ok bro another star bug this is annoying >:/")
-    if (!updateData||updateData.length === 0)
-        console.warn("supa fault bro")
     loadLevels();
 }
 
