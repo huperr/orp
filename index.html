@@ -307,8 +307,12 @@ async function likeLevel(id) {
     let likedLevels = JSON.parse(localStorage.getItem("liked_levels")) || [];
 
     if (likedLevels.includes(id)) {
-        alert("Dear my epic serious chuds. You cannot star an obby twice. If you continue, I will find your house and force you to beat Bloodbath. Please do not do that again.")
-        return;
+        const userChoice = confirm("Liking an obby twice could delete other obbies. Do you really want to do that?");
+        if (userChoice) {
+            window.location.href = "https://www.youtube.com/watch?v=your_video_id";
+        } else {
+            return;
+        }
     }
     const { data: currentLevel, error: fetchError } = await supabaseClient
         .from("levels")
