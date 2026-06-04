@@ -9,7 +9,7 @@
 <style>
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    max-width: 800px; /* Widened to fit the leaderboard layout */
+    max-width: 800px; 
     margin: 40px auto;
     padding: 0 20px;
     color: #333;
@@ -65,7 +65,7 @@ hr {
     margin: 30px 0;
 }
 
-/* Two-column layout container for Feed and Leaderboard */
+
 .main-layout {
     display: flex;
     gap: 40px;
@@ -209,7 +209,7 @@ async function uploadLevel() {
         .insert({
             title: title,
             data: jsonData,
-            stars: 0 // Initialize stars at 0
+            stars: 0 
         })
         .select();
 
@@ -265,20 +265,30 @@ async function loadLevels() {
 
 
 async function likeLevel(id, currentStars) {
+    const { data: currentLevel, error: fetchError } = await supabaseClient
+        .from("levels")
+        .select("stars")
+        .eq("id", id)
+        .single();
+
+    if (fetchError || !currentLevel) {
+        console.error("Error fetching level for star:", fetchError);
+        alert("Couldn't find that level to star, bruh");
+        return;
+    }
+    const currentStars = Number(currentLevel.stars) || 0;
     const newStarCount = currentStars + 1;
 
-    const { error } = await supabaseClient
+    const { error: updateError } = await supabaseClient
         .from("levels")
         .update({ stars: newStarCount })
         .eq("id", id);
 
-    if (error) {
-        console.error("error", error);
-        alert("couldn't add stars for some reason...");
+    if (updateError) {
+        console.error("error", updateError);
+        alert("stars error pls fix!!!!");
         return;
     }
-
-    
     loadLevels();
 }
 
