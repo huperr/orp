@@ -126,7 +126,7 @@ hr {
     background: #fff1b8 !important;
 }
 
-/* Leaderboard list styles */
+
 .leaderboard-list {
     list-style: none;
     padding: 0;
@@ -277,19 +277,32 @@ async function likeLevel(id) {
         alert("report ts");
         return;
     }
+
+    console.log("ok brochacho", currentLevel);
+
+    if(!('stars' in currentLevel)){
+        alert("ts star error im fixing")
+        return;
+    }
     const eStars = Number(currentLevel.stars) || 0;
     const newStarCount = eStars + 1;
+    console.log("updated star count brochacho")
+    
 
     const { error: updateError } = await supabaseClient
         .from("levels")
         .update({ stars: newStarCount })
-        .eq("id", id);
+        .eq("id", id)
+        .select();
 
     if (updateError) {
         console.error("error", updateError);
         alert("stars error pls fix!!!!");
         return;
     }
+    console.log("ok bro another star bug this is annoying >:/")
+    if (!updateData||updateData.length === 0)
+        console.warn("supa fault bro")
     loadLevels();
 }
 
