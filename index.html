@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>JSON Share</title>
+<title>orporporp</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -98,29 +98,28 @@ hr {
 
 <body>
 
-<h1>JSON Share</h1>
+<h1>orporporp</h1>
 
-<input id="title" placeholder="Level title (optional)" type="text">
+<input id="title" placeholder="title" type="text">
 <input type="file" id="fileInput" accept=".json">
 <p id="fileName"></p>
 
-<button onclick="uploadLevel()">Upload</button>
+<button onclick="uploadLevel()">upload</button>
 
 <hr>
 
-<h2>Levels</h2>
+<h2>obbies</h2>
 <div id="levels"></div>
 
 <script>
-console.log("SCRIPT RUNNING");
+console.log("running...");
 
-// ===================== CONFIG =====================
 const SUPABASE_URL = "https://nnqjzkwcliapfmagxgfh.supabase.co";
 const SUPABASE_KEY = "sb_publishable_7YyiJgIDTOjN8Ne7G6avcQ_aGswLuaD";
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// ===================== FILE NAME =====================
+
 document.getElementById("fileInput").addEventListener("change", (e) => {
     if (e.target.files.length > 0) {
         document.getElementById("fileName").innerText = e.target.files[0].name;
@@ -129,12 +128,12 @@ document.getElementById("fileInput").addEventListener("change", (e) => {
     }
 });
 
-// ===================== UPLOAD =====================
+
 async function uploadLevel() {
     const file = document.getElementById("fileInput").files[0];
 
     if (!file) {
-        alert("Choose a JSON file");
+        alert("choose file bruh");
         return;
     }
 
@@ -144,7 +143,7 @@ async function uploadLevel() {
     try {
         jsonData = JSON.parse(text);
     } catch (err) {
-        alert("Invalid JSON");
+        alert("invalid...");
         return;
     }
 
@@ -160,12 +159,12 @@ async function uploadLevel() {
         .select();
 
     if (error) {
-        console.error("UPLOAD ERROR:", error);
-        alert("Upload failed: " + error.message);
+        console.error("error:", error);
+        alert("error: " + error.message);
         return;
     }
 
-    alert("Uploaded successfully!");
+    alert("uploaded chuds");
     
     document.getElementById("title").value = "";
     document.getElementById("fileInput").value = "";
@@ -174,7 +173,6 @@ async function uploadLevel() {
     loadLevels();
 }
 
-// ===================== LOAD =====================
 async function loadLevels() {
     const { data, error } = await supabaseClient
         .from("levels")
@@ -182,7 +180,7 @@ async function loadLevels() {
         .order("created_at", { ascending: false });
 
     if (error) {
-        console.error("LOAD ERROR:", error);
+        console.error("error:", error);
         return;
     }
 
@@ -202,7 +200,7 @@ async function loadLevels() {
     });
 }
 
-// ===================== DOWNLOAD =====================
+
 async function downloadLevel(id) {
     const { data, error } = await supabaseClient
         .from("levels")
@@ -211,8 +209,8 @@ async function downloadLevel(id) {
         .single();
 
     if (error || !data) {
-        console.error("DOWNLOAD ERROR:", error);
-        alert("Could not fetch level data.");
+        console.error("download error:", error);
+        alert("could not download bruh");
         return;
     }
 
@@ -232,7 +230,7 @@ async function downloadLevel(id) {
     URL.revokeObjectURL(url); 
 }
 
-// ===================== INITIAL LOAD =====================
+
 loadLevels();
 
 </script>
