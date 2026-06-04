@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -37,6 +36,8 @@ input, button {
 
 <input type="file" id="fileInput" accept=".json">
 
+<p id="text"></p>
+
 <button onclick="uploadLevel()">Upload</button>
 
 <hr>
@@ -53,6 +54,13 @@ const supabase = window.supabase.createClient(
     SUPABASE_URL,
     SUPABASE_KEY
 );
+
+// show file name
+document.getElementById("fileInput")
+.addEventListener("change", (e) => {
+    document.getElementById("text")
+    .innerText = e.target.files[0].name;
+});
 
 // UPLOAD
 async function uploadLevel() {
@@ -98,7 +106,7 @@ async function uploadLevel() {
     loadLevels();
 }
 
-// LOAD LEVELS
+// LOAD
 async function loadLevels() {
 
     const { data } = await supabase
@@ -107,13 +115,11 @@ async function loadLevels() {
         .order("created_at", { ascending: false });
 
     const div = document.getElementById("levels");
-
     div.innerHTML = "";
 
     data.forEach(level => {
 
         const item = document.createElement("div");
-
         item.className = "level";
 
         item.innerHTML = `
@@ -144,23 +150,12 @@ async function downloadLevel(id) {
     const url = URL.createObjectURL(blob);
 
     const a = document.createElement("a");
-
     a.href = url;
     a.download = data.title + ".json";
     a.click();
 }
 
 loadLevels();
-    <input type="file" id="fileInput">
-<p id="text"></p>
-
-<script>
-document.getElementById("fileInput")
-.addEventListener("change", (e) => {
-    document.getElementById("text")
-    .innerText = e.target.files[0].name;
-});
-</script>
 
 </script>
 
