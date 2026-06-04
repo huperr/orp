@@ -46,9 +46,13 @@ input, button {
 
 <script>
 
+// =====================
+// SUPABASE CONFIG
+// =====================
 const SUPABASE_URL = "https://nnqjzkwcliapfmagxgfh.supabase.co";
 const SUPABASE_KEY = "sb_publishable_7YyiJgIDTOjN8Ne7G6avcQ_aGswLuaD";
 
+// ONLY ONCE (IMPORTANT)
 const supabase = window.supabase.createClient(
     SUPABASE_URL,
     SUPABASE_KEY
@@ -61,7 +65,9 @@ document.getElementById("fileInput")
         e.target.files[0].name;
 });
 
-// ===================== UPLOAD =====================
+// =====================
+// UPLOAD FUNCTION
+// =====================
 async function uploadLevel() {
 
     const file = document.getElementById("fileInput").files[0];
@@ -107,7 +113,9 @@ async function uploadLevel() {
     loadLevels();
 }
 
-// ===================== LOAD =====================
+// =====================
+// LOAD LEVELS
+// =====================
 async function loadLevels() {
 
     const { data, error } = await supabase
@@ -139,7 +147,9 @@ async function loadLevels() {
     });
 }
 
-// ===================== DOWNLOAD =====================
+// =====================
+// DOWNLOAD
+// =====================
 async function downloadLevel(id) {
 
     const { data } = await supabase
