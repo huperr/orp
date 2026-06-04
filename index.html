@@ -84,7 +84,8 @@ console.log("SCRIPT RUNNING");
 const SUPABASE_URL = "https://nnqjzkwcliapfmagxgfh.supabase.co";
 const SUPABASE_KEY = "sb_publishable_7YyiJgIDTOjN8Ne7G6avcQ_aGswLuaD";
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// Renamed from 'supabase' to 'supabaseClient' to fix global variable collisions
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ===================== FILE NAME =====================
 document.getElementById("fileInput").addEventListener("change", (e) => {
@@ -117,8 +118,7 @@ async function uploadLevel() {
     let title = document.getElementById("title").value.trim();
     if (!title) title = file.name.replace(".json", "");
 
-    // Note the .select() at the end to correctly format the response object structure in v2
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
         .from("levels")
         .insert({
             title: title,
@@ -134,7 +134,7 @@ async function uploadLevel() {
 
     alert("Uploaded successfully!");
     
-    // Clear inputs
+    // Clear inputs safely
     document.getElementById("title").value = "";
     document.getElementById("fileInput").value = "";
     document.getElementById("fileName").innerText = "";
@@ -144,7 +144,7 @@ async function uploadLevel() {
 
 // ===================== LOAD =====================
 async function loadLevels() {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
         .from("levels")
         .select("*")
         .order("created_at", { ascending: false });
@@ -172,7 +172,7 @@ async function loadLevels() {
 
 // ===================== DOWNLOAD =====================
 async function downloadLevel(id) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
         .from("levels")
         .select("*")
         .eq("id", id)
@@ -194,10 +194,10 @@ async function downloadLevel(id) {
     const a = document.createElement("a");
     a.href = url;
     a.download = data.title + ".json";
-    document.body.appendChild(a); // Appending to body ensures cross-browser compliance
+    document.body.appendChild(a); 
     a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(url); // Clean up memory
+    URL.revokeObjectURL(url); 
 }
 
 // ===================== INITIAL LOAD =====================
