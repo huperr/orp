@@ -204,12 +204,17 @@ async function uploadLevel() {
     let title = document.getElementById("title").value.trim();
     if (!title) title = file.name.replace(".json", "");
 
+    const sizeYay = file.size < 1024 
+        ? file.size + " B" 
+        : (file.size / 1024).toFixed(1) + " KB";
+
     const { data, error } = await supabaseClient
         .from("levels")
         .insert({
             title: title,
             data: jsonData,
-            stars: 0 
+            stars: 0, 
+            file_size: sizeYay
         })
         .select();
 
@@ -247,6 +252,7 @@ async function loadLevels() {
         const starsCount = level.stars || 0;
         const item = document.createElement("div");
         item.className = "level";
+        const sizeDisplay = level.file_size ? `(${level.file_size})` : '';
 
         
         item.innerHTML = `
