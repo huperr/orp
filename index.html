@@ -46,28 +46,25 @@ input, button {
 
 <script>
 
-// =====================
-// SUPABASE CONFIG
-// =====================
+console.log("SCRIPT RUNNING");
+
+// ===================== CONFIG =====================
 const SUPABASE_URL = "https://nnqjzkwcliapfmagxgfh.supabase.co";
 const SUPABASE_KEY = "sb_publishable_7YyiJgIDTOjN8Ne7G6avcQ_aGswLuaD";
 
-// ONLY ONCE (IMPORTANT)
+// ⚠️ CHỈ 1 LẦN DUY NHẤT
 const supabase = window.supabase.createClient(
     SUPABASE_URL,
     SUPABASE_KEY
 );
 
-// show file name
-document.getElementById("fileInput")
-.addEventListener("change", (e) => {
+// ===================== FILE NAME =====================
+document.getElementById("fileInput").addEventListener("change", (e) => {
     document.getElementById("fileName").innerText =
         e.target.files[0].name;
 });
 
-// =====================
-// UPLOAD FUNCTION
-// =====================
+// ===================== UPLOAD =====================
 async function uploadLevel() {
 
     const file = document.getElementById("fileInput").files[0];
@@ -89,10 +86,7 @@ async function uploadLevel() {
     }
 
     let title = document.getElementById("title").value;
-
-    if (!title) {
-        title = file.name.replace(".json", "");
-    }
+    if (!title) title = file.name.replace(".json", "");
 
     const result = await supabase
         .from("levels")
@@ -113,9 +107,7 @@ async function uploadLevel() {
     loadLevels();
 }
 
-// =====================
-// LOAD LEVELS
-// =====================
+// ===================== LOAD =====================
 async function loadLevels() {
 
     const { data, error } = await supabase
@@ -147,9 +139,7 @@ async function loadLevels() {
     });
 }
 
-// =====================
-// DOWNLOAD
-// =====================
+// ===================== DOWNLOAD =====================
 async function downloadLevel(id) {
 
     const { data } = await supabase
@@ -171,8 +161,9 @@ async function downloadLevel(id) {
     a.click();
 }
 
-// start
+// =====================
 loadLevels();
+// =====================
 
 </script>
 
