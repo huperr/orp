@@ -266,6 +266,12 @@ async function loadLevels() {
 
 
 async function likeLevel(id) {
+    let likedLevels = JSON.parse(localStorage.getItem("liked_levels")) || [];
+
+    if (likedLevels.includes(id)) {
+        alert("haha no star farm u loser lololololololol")
+        return;
+    }
     const { data: currentLevel, error: fetchError } = await supabaseClient
         .from("levels")
         .select("stars")
@@ -300,6 +306,11 @@ async function likeLevel(id) {
         alert("stars error pls fix!!!!");
         return;
     }
+
+    likedLevels.push(id);
+    localStorage.setItem("liked_levels", JSON.stringify(likedLevels));
+
+    
     console.log("ok bro another star bug this is annoying >:/")
     if (!updateData||updateData.length === 0)
         console.warn("supa fault bro")
