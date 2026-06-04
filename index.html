@@ -244,7 +244,7 @@ async function loadLevels() {
     div.innerHTML = "";
 
     data.forEach(level => {
-        const currentStars = level.stars || 0;
+        const starsCount = level.stars || 0;
         const item = document.createElement("div");
         item.className = "level";
 
@@ -252,7 +252,7 @@ async function loadLevels() {
             <h3>${level.title}</h3>
             <div class="action-buttons">
                 <button class="star-btn" onclick="likeLevel(${level.id}, ${currentStars})">⭐ ${currentStars}</button>
-                <button onclick="downloadLevel(${level.id})">Download</button>
+                <button onclick="downloadLevel(${level.id})">download ts</button>
             </div>
         `;
 
@@ -264,7 +264,7 @@ async function loadLevels() {
 }
 
 
-async function likeLevel(id, currentStars) {
+async function likeLevel(id) {
     const { data: currentLevel, error: fetchError } = await supabaseClient
         .from("levels")
         .select("stars")
@@ -272,12 +272,12 @@ async function likeLevel(id, currentStars) {
         .single();
 
     if (fetchError || !currentLevel) {
-        console.error("Error fetching level for star:", fetchError);
-        alert("Couldn't find that level to star, bruh");
+        console.error("error", fetchError);
+        alert("report ts");
         return;
     }
-    const currentStars = Number(currentLevel.stars) || 0;
-    const newStarCount = currentStars + 1;
+    const eStars = Number(currentLevel.stars) || 0;
+    const newStarCount = eStars + 1;
 
     const { error: updateError } = await supabaseClient
         .from("levels")
@@ -323,7 +323,34 @@ async function loadLeaderboard() {
         list.appendChild(item);
     });
 }
+async function downloadLevel(id) {
+    const { data, error } = await supabaseClient
+        .from("levels")
+        .select("*")
+        .eq("id", id)
+        .single();
 
+    if (error || !data) {
+        console.error("download error:", error);
+        alert("could not download bruh!");
+        return;
+    }
+
+    const blob = new Blob(
+        [JSON.stringify(data.data, null, 2)],
+        { type: "application/json" }
+    );
+
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = data.title + ".json";
+    document.body.appendChild(a); 
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url); 
+}
 
 loadLevels();
 
