@@ -8,22 +8,55 @@
 
 <style>
 body {
-    font-family: Arial;
+    font-family: Arial, sans-serif;
     max-width: 800px;
     margin: auto;
     padding: 20px;
+    background-color: #f9f9f9;
 }
 
 input, button {
     width: 100%;
     margin: 5px 0;
     padding: 10px;
+    box-sizing: border-box;
+}
+
+button {
+    cursor: pointer;
+    background-color: #007bf5;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+button:hover {
+    background-color: #0056b3;
 }
 
 .level {
     border: 1px solid #ccc;
-    padding: 10px;
+    background: white;
+    padding: 15px;
     margin-top: 10px;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.level h3 {
+    margin: 0;
+}
+
+.level button {
+    width: auto;
+    background-color: #28a745;
+}
+
+.level button:hover {
+    background-color: #218838;
 }
 </style>
 </head>
@@ -35,7 +68,7 @@ input, button {
 <input id="title" placeholder="Level title (optional)">
 <input type="file" id="fileInput" accept=".json">
 
-<p id="fileName"></p>
+<p id="fileName" style="color: #666; font-style: italic;"></p>
 
 <button onclick="uploadLevel()">Upload</button>
 
@@ -45,28 +78,25 @@ input, button {
 <div id="levels"></div>
 
 <script>
-
 console.log("SCRIPT RUNNING");
 
 // ===================== CONFIG =====================
 const SUPABASE_URL = "https://nnqjzkwcliapfmagxgfh.supabase.co";
 const SUPABASE_KEY = "sb_publishable_7YyiJgIDTOjN8Ne7G6avcQ_aGswLuaD";
 
-// ⚠️ CHỈ 1 LẦN DUY NHẤT
-const supabase = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY
-);
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ===================== FILE NAME =====================
 document.getElementById("fileInput").addEventListener("change", (e) => {
-    document.getElementById("fileName").innerText =
-        e.target.files[0].name;
+    if (e.target.files.length > 0) {
+        document.getElementById("fileName").innerText = e.target.files[0].name;
+    } else {
+        document.getElementById("fileName").innerText = "";
+    }
 });
 
 // ===================== UPLOAD =====================
 async function uploadLevel() {
-
     const file = document.getElementById("fileInput").files[0];
 
     if (!file) {
@@ -75,7 +105,6 @@ async function uploadLevel() {
     }
 
     const text = await file.text();
-
     let jsonData;
 
     try {
@@ -85,38 +114,43 @@ async function uploadLevel() {
         return;
     }
 
-    let title = document.getElementById("title").value;
+    let title = document.getElementById("title").value.trim();
     if (!title) title = file.name.replace(".json", "");
 
-    const result = await supabase
+    // Note the .select() at the end to correctly format the response object structure in v2
+    const { data, error } = await supabase
         .from("levels")
         .insert({
             title: title,
             data: jsonData
-        });
+        })
+        .select();
 
-    console.log("UPLOAD RESULT:", result);
-
-    if (result.error) {
-        alert(result.error.message);
+    if (error) {
+        console.error("UPLOAD ERROR:", error);
+        alert("Upload failed: " + error.message);
         return;
     }
 
-    alert("Uploaded!");
+    alert("Uploaded successfully!");
+    
+    // Clear inputs
+    document.getElementById("title").value = "";
+    document.getElementById("fileInput").value = "";
+    document.getElementById("fileName").innerText = "";
 
     loadLevels();
 }
 
 // ===================== LOAD =====================
 async function loadLevels() {
-
     const { data, error } = await supabase
         .from("levels")
         .select("*")
         .order("created_at", { ascending: false });
 
     if (error) {
-        console.log("LOAD ERROR:", error);
+        console.error("LOAD ERROR:", error);
         return;
     }
 
@@ -124,15 +158,12 @@ async function loadLevels() {
     div.innerHTML = "";
 
     data.forEach(level => {
-
         const item = document.createElement("div");
         item.className = "level";
 
         item.innerHTML = `
             <h3>${level.title}</h3>
-            <button onclick="downloadLevel(${level.id})">
-                Download
-            </button>
+            <button onclick="downloadLevel(${level.id})">Download</button>
         `;
 
         div.appendChild(item);
@@ -141,12 +172,17 @@ async function loadLevels() {
 
 // ===================== DOWNLOAD =====================
 async function downloadLevel(id) {
-
-    const { data } = await supabase
+    const { data, error } = await supabase
         .from("levels")
         .select("*")
         .eq("id", id)
         .single();
+
+    if (error || !data) {
+        console.error("DOWNLOAD ERROR:", error);
+        alert("Could not fetch level data.");
+        return;
+    }
 
     const blob = new Blob(
         [JSON.stringify(data.data, null, 2)],
@@ -158,12 +194,14 @@ async function downloadLevel(id) {
     const a = document.createElement("a");
     a.href = url;
     a.download = data.title + ".json";
+    document.body.appendChild(a); // Appending to body ensures cross-browser compliance
     a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url); // Clean up memory
 }
 
-// =====================
+// ===================== INITIAL LOAD =====================
 loadLevels();
-// =====================
 
 </script>
 
