@@ -158,6 +158,7 @@ hr {
 <div class="main-layout">
     <div class="feed-column">
         <h2>obbies</h2>
+        <input id="searchBar" class="search-input" placeholder="find ur obby here ig" type="text" oninput="filterLevels()">
         <div id="levels"></div>
     </div>
 
@@ -238,7 +239,7 @@ async function uploadLevel() {
 
     loadLevels();
 }
-
+let allLoadedLevels = [];
 async function loadLevels() {
     
     const { data, error } = await supabaseClient
@@ -250,16 +251,25 @@ async function loadLevels() {
         console.error("error:", error);
         return;
     }
-
+    allLoadedLevels = data;
+    document.getElementById("searchBar").value = "";
+    renderLevelsList(allLoadedLevels);
+    loadLeaderboard();
+}
+function renderLevelsList(levelsToRender) {
     const div = document.getElementById("levels");
     div.innerHTML = "";
 
-    data.forEach(level => {
+    if (levelsToRender.length === 0) {
+        div.innerHTML = `<p style="color: #888; font-size: 14px; text-align: center; margin-top: 20px;">no obbies found bruh</p>`;
+        return;
+    }
+
+    levelsToRender.forEach(level => {
         const starsCount = level.stars || 0;
         const item = document.createElement("div");
         item.className = "level";
         
-  
         let sizeDisplay = "";
         if (level.file_size) {
             sizeDisplay = level.file_size;
@@ -267,7 +277,6 @@ async function loadLevels() {
             const rawLength = JSON.stringify(level.data).length;
             sizeDisplay = rawLength < 1024 ? rawLength + " B" : (rawLength / 1024).toFixed(1) + " KB";
         }
-
 
         item.innerHTML = `
             <h3>${level.title} <span style="font-size: 12px; color: #888; margin-left: 5px;">(${sizeDisplay})</span></h3>
@@ -279,8 +288,17 @@ async function loadLevels() {
 
         div.appendChild(item);
     });
+}
+    function filterLevels() {
+    const query = document.getElementById("searchBar").value.toLowerCase().trim();
+    
+    
+    const filtered = allLoadedLevels.filter(level => {
+        return level.title && level.title.toLowerCase().includes(query);
+    });
 
-    loadLeaderboard();
+    
+    renderLevelsList(filtered);
 }
 
 
