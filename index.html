@@ -162,8 +162,7 @@ hr {
         <div id="levels"></div>
     </div>
 
-    <div class="leaderboard-column">
-        <h2 style="margin-top:0; font-size:16px;">🏆 Star Leaderboard</h2>
+    <div class="leaderboard-column">leaderboard thingy</h2>
         <ul id="leaderboard" class="leaderboard-list"></ul>
     </div>
 </div>
@@ -230,7 +229,7 @@ async function uploadLevel() {
 }
 
 async function loadLevels() {
-    // 1. Fetch data for main feed (ordered by creation date)
+    
     const { data, error } = await supabaseClient
         .from("levels")
         .select("*")
@@ -260,11 +259,11 @@ async function loadLevels() {
         div.appendChild(item);
     });
 
-    // 2. Refresh the Leaderboard alongside the main list
+    
     loadLeaderboard();
 }
 
-// Function to handle liking/staring a level
+
 async function likeLevel(id, currentStars) {
     const newStarCount = currentStars + 1;
 
@@ -274,25 +273,25 @@ async function likeLevel(id, currentStars) {
         .eq("id", id);
 
     if (error) {
-        console.error("Error upvoting:", error);
-        alert("Couldn't add star bruh");
+        console.error("error", error);
+        alert("couldn't add stars for some reason...");
         return;
     }
 
-    // Refresh layout to display updated data
+    
     loadLevels();
 }
 
-// Function to render the top levels by star count
+
 async function loadLeaderboard() {
     const { data, error } = await supabaseClient
         .from("levels")
         .select("title, stars")
         .order("stars", { ascending: false })
-        .limit(5); // Change 5 to any number you prefer for top ranking
+        .limit(30); 
 
     if (error) {
-        console.error("Leaderboard error:", error);
+        console.error("leaderboard error", error);
         return;
     }
 
@@ -300,7 +299,7 @@ async function loadLeaderboard() {
     list.innerHTML = "";
 
     if(data.length === 0) {
-        list.innerHTML = `<li class="leaderboard-item" style="color:#888;">No ranks yet</li>`;
+        list.innerHTML = `<li class="leaderboard-item" style="color:#888;">NaN</li>`;
         return;
     }
 
@@ -315,7 +314,7 @@ async function loadLeaderboard() {
     });
 }
 
-// Initial pull on page load
+
 loadLevels();
 
 </script>
