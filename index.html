@@ -53,6 +53,22 @@ button:hover {
     background: #222;
 }
 
+
+.btn-export {
+    background: #fff;
+    color: #000;
+    border: 1px solid #000;
+}
+
+.btn-export:hover {
+    background: #f5f5f5;
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+}
+
 #fileName {
     font-size: 13px;
     color: #666;
@@ -117,7 +133,6 @@ hr {
     background: #e5e5e5;
 }
 
-
 .star-btn {
     background: #fffbe6 !important;
     border-color: #ffe58f !important;
@@ -125,7 +140,6 @@ hr {
 .star-btn:hover {
     background: #fff1b8 !important;
 }
-
 
 .leaderboard-list {
     list-style: none;
@@ -147,24 +161,26 @@ hr {
 
 <h1>Obby Revival Project Hub</h1>
 
-
 <input id="title" placeholder="title" type="text">
-<input type="file" id="fileInput" accept=".json">
+<input type="file" id="fileInput" accept=".json,.rbxmx,.xml">
 <p id="fileName"></p>
 
-<button onclick="uploadLevel()">Upload Level</button>
+<div class="button-group">
+    <button onclick="uploadLevel()">Upload Level</button>
+    <button class="btn-export" onclick="exportLevel()">Export</button>
+</div>
 
 <hr>
 
 <div class="main-layout">
     <div class="feed-column">
-        <h2>obbies</h2>
+        <h2>Community Obbies</h2>
         <input id="searchBar" class="search-input" placeholder="Search for serious obbies here." type="text" oninput="filterLevels()">
         <div id="levels"></div>
     </div>
 
     <div class="leaderboard-column">
-        <h2>Leaderboard.</h2>
+        <h2>Leaderboard</h2>
         <ul id="leaderboard" class="leaderboard-list"></ul>
     </div>
 </div>
@@ -176,7 +192,6 @@ const SUPABASE_URL = "https://nnqjzkwcliapfmagxgfh.supabase.co";
 const SUPABASE_KEY = "sb_publishable_7YyiJgIDTOjN8Ne7G6avcQ_aGswLuaD";
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
 
 document.getElementById("fileInput").addEventListener("change", (e) => {
     if (e.target.files.length > 0) {
@@ -205,7 +220,7 @@ async function uploadLevel() {
     try {
         jsonData = JSON.parse(text);
     } catch (err) {
-        alert("invalid...serious chuds");
+        alert("invalid...serious chuds...json file bro...");
         return;
     }
 
@@ -240,9 +255,215 @@ async function uploadLevel() {
 
     loadLevels();
 }
+
+
+let currentFileNameForExport = "ExportedObby";
+
+function exportLevel() {
+    const file = document.getElementById("fileInput").files[0];
+    if (!file) {
+        alert("rbxmx file brochacho...sory for that...");
+        return;
+    }
+
+    currentFileNameForExport = file.name.replace(/\.[^/.]+$/, ""); 
+    
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        try {
+            const xmlDoc = new DOMParser().parseFromString(event.target.result, "text/xml");
+            
+            const obbyFolderNode = xmlDoc.querySelector('roblox > Item');
+            if (!obbyFolderNode) {
+                throw new Error("erorrrrrrr!");
+            }
+
+            let obbyName = currentFileNameForExport;
+            let difficulty = "unknown cuz idk how to code ts";
+            let creator = "john huper";
+
+            const rootProps = obbyFolderNode.querySelector(':scope > Properties');
+            if (rootProps) {
+                const nameProp = rootProps.querySelector('string[name="Name"]');
+                if (nameProp) obbyName = nameProp.textContent.trim();
+            }
+
+            const serializedData = serializeInstance(obbyFolderNode);
+
+            const finalPayload = {
+                "ObbyName": obbyName,
+                "Difficulty": difficulty,
+                "Creator": creator,
+                "Data": serializedData
+            };
+
+
+            const blob = new Blob([JSON.stringify(finalPayload, null, 4)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${currentFileNameForExport}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            
+            URL.revokeObjectURL(url);
+            alert("exported brochacho");
+
+        } catch (err) {
+            alert("error...pls dm me if ts happens:" + err.message);
+        }
+    };
+    reader.readAsText(file);
+}
+
+function serializeInstance(node) {
+    const classNameAttr = node.getAttribute('class');
+    let objName = "Unknown";
+    
+    const propsNode = node.querySelector(':scope > Properties');
+    if (propsNode) {
+        const nameEl = propsNode.querySelector('string[name="Name"]');
+        if (nameEl) objName = nameEl.textContent.trim();
+    }
+
+    const childNodes = node.querySelectorAll(':scope > Item');
+    const isBasePart = ["Part", "WedgePart", "CornerWedgePart", "MeshPart", "SpawnLocation", "TrussPart"].includes(classNameAttr);
+    
+    if (!isBasePart && childNodes.length === 0) {
+        return null;
+    }
+
+    let className = classNameAttr;
+    if (objName === "SpawnLocation") {
+        className = "Spawn";
+    } else if (objName === "Truss") {
+        className = "Truss";
+    }
+
+    const data = {
+        "ObbyName": currentFileNameForExport,
+        "Name": objName,
+        "ClassName": className,
+        "Children": []
+    };
+
+    if (isBasePart && propsNode) {
+        const cframeNode = propsNode.querySelector('CoordinateFrame[name="CFrame"]');
+        const sizeNode = propsNode.querySelector('Vector3[name="size"]') || propsNode.querySelector('Vector3[name="Size"]');
+        const colorNode = propsNode.querySelector('Color3[name="Color"]') || propsNode.querySelector('Color3uint8[name="Color3uint8"]');
+        
+        const transform = parseCFrame(cframeNode);
+
+        data.Properties = {
+            "Size": parseVector3(sizeNode),
+            "Position": transform.position,
+            "Rotation": transform.rotation,
+            "Color": parseColor3(colorNode)
+        };
+    }
+
+    childNodes.forEach(child => {
+        const serializedChild = serializeInstance(child);
+        if (serializedChild) {
+            data.Children.push(serializedChild);
+        }
+    });
+
+    return data;
+}
+
+function parseVector3(node) {
+    if (!node) return { "X": 1, "Y": 1, "Z": 1 }; 
+    
+    const xNode = node.querySelector('X') || node.querySelector('x');
+    const yNode = node.querySelector('Y') || node.querySelector('y');
+    const zNode = node.querySelector('Z') || node.querySelector('z');
+
+    return {
+        "X": xNode ? Number(xNode.textContent) : 1,
+        "Y": yNode ? Number(yNode.textContent) : 1,
+        "Z": zNode ? Number(zNode.textContent) : 1
+    };
+}
+
+function parseCFrame(node) {
+    const defaultTransform = {
+        position: { "X": 0, "Y": 0, "Z": 0 },
+        rotation: { "X": 0, "Y": 0, "Z": 0 }
+    };
+    
+    if (!node) return defaultTransform;
+
+    const text = node.textContent.trim();
+    const values = text.split(/\s+/).map(Number);
+    
+    if (values.length < 12) return defaultTransform;
+
+    const x = values[0];
+    const y = values[1];
+    const z = values[2];
+
+    const r00 = values[3],  r01 = values[4],  r02 = values[5];
+    const r10 = values[6],  r11 = values[7],  r12 = values[8];
+    const r20 = values[9],  r21 = values[10], r22 = values[11];
+
+    let rotX = 0, rotY = 0, rotZ = 0;
+
+    if (r02 < 1) {
+        if (r02 > -1) {
+            rotX = Math.atan2(-r12, r22);
+            rotY = Math.asin(r02);
+            rotZ = Math.atan2(-r01, r00);
+        } else { 
+            rotX = -Math.atan2(r10, r11);
+            rotY = -Math.PI / 2;
+            rotZ = 0;
+        }
+    } else { 
+        rotX = Math.atan2(r10, r11);
+        rotY = Math.PI / 2;
+        rotZ = 0;
+    }
+
+    const radToDeg = 180 / Math.PI;
+    
+    return {
+        position: { "X": x, "Y": y, "Z": z },
+        rotation: {
+            "X": Math.round(rotX * radToDeg * 100) / 100,
+            "Y": Math.round(rotY * radToDeg * 100) / 100,
+            "Z": Math.round(rotZ * radToDeg * 100) / 100
+        }
+    };
+}
+
+function parseColor3(node) {
+    if (!node) return { "R": 1, "G": 1, "B": 1 };
+    if (node.tagName === "Color3uint8") {
+        const val = Number(node.textContent);
+        return {
+            "R": ((val >> 16) & 255) / 255,
+            "G": ((val >> 8) & 255) / 255,
+            "B": (val & 255) / 255
+        };
+    }
+    
+    const rNode = node.querySelector('R') || node.querySelector('r');
+    const gNode = node.querySelector('G') || node.querySelector('g');
+    const bNode = node.querySelector('B') || node.querySelector('b');
+
+    return {
+        "R": rNode ? Number(rNode.textContent) : 1,
+        "G": gNode ? Number(gNode.textContent) : 1,
+        "B": bNode ? Number(bNode.textContent) : 1
+    };
+}
+
+
 let allLoadedLevels = [];
 async function loadLevels() {
-    
     const { data, error } = await supabaseClient
         .from("levels")
         .select("*")
@@ -257,6 +478,7 @@ async function loadLevels() {
     renderLevelsList(allLoadedLevels);
     loadLeaderboard();
 }
+
 function renderLevelsList(levelsToRender) {
     const div = document.getElementById("levels");
     div.innerHTML = "";
@@ -290,18 +512,14 @@ function renderLevelsList(levelsToRender) {
         div.appendChild(item);
     });
 }
-    function filterLevels() {
+
+function filterLevels() {
     const query = document.getElementById("searchBar").value.toLowerCase().trim();
-    
-    
     const filtered = allLoadedLevels.filter(level => {
         return level.title && level.title.toLowerCase().includes(query);
     });
-
-    
     renderLevelsList(filtered);
 }
-
 
 async function likeLevel(id) {
     let likedLevels = JSON.parse(localStorage.getItem("liked_levels")) || [];
@@ -322,16 +540,12 @@ async function likeLevel(id) {
         return;
     }
 
-    console.log("ok brochacho", currentLevel);
-
     if(!('stars' in currentLevel)){
         alert("ts star error im fixing")
         return;
     }
     const eStars = Number(currentLevel.stars) || 0;
     const newStarCount = eStars + 1;
-    console.log("updated star count brochacho")
-    
 
     const { error: updateError } = await supabaseClient
         .from("levels")
@@ -350,7 +564,6 @@ async function likeLevel(id) {
 
     loadLevels();
 }
-
 
 async function loadLeaderboard() {
     const { data, error } = await supabaseClient
@@ -413,7 +626,6 @@ async function downloadLevel(id) {
 }
 
 loadLevels();
-
 </script>
 
 </body>
