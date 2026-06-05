@@ -277,6 +277,7 @@ function exportLevel() {
             if (!obbyFolderNode) {
                 throw new Error("erorrrrrrr!");
             }
+            
 
             let obbyName = currentFileNameForExport;
             let difficulty = "unknown cuz idk how to code ts";
@@ -287,6 +288,14 @@ function exportLevel() {
                 const nameProp = rootProps.querySelector('string[name="Name"]');
                 if (nameProp) obbyName = nameProp.textContent.trim();
             }
+
+        //thing idk
+            const userChoice = confirm("Exporter is still work in progress and has many bugs. Do you want to proceed?");
+            if (!userChoice) {
+                console.log("ok...man");
+                return; 
+            }
+            //continue? ok
 
             const serializedData = serializeInstance(obbyFolderNode);
 
