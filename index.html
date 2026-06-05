@@ -1,63 +1,294 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Obby Revival Project Hub/title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background-color: #121212; color: #fff; }
-        .level { border: 1px solid #333; padding: 15px; margin-bottom: 10px; background: #1e1e1e; border-radius: 6px; }
-        .action-buttons button { margin-right: 5px; padding: 8px 12px; cursor: pointer; }
-        .leaderboard-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #222; }
-        #searchBar { width: 100%; padding: 10px; margin-bottom: 20px; box-sizing: border-box; }
-    </style>
+<meta charset="UTF-8">
+<title>Obby Revival Site</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    max-width: 800px; 
+    margin: 40px auto;
+    padding: 0 20px;
+    color: #333;
+}
+
+h1, h2, h3 {
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+h1 { font-size: 24px; }
+h2 { font-size: 18px; margin-top: 40px; }
+
+input[type="text"], button {
+    font-family: inherit;
+    font-size: 14px;
+    width: 100%;
+    height: 40px;
+    padding: 0 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+input[type="file"] {
+    font-size: 14px;
+    margin-bottom: 10px;
+    display: block;
+}
+
+button {
+    background: #000;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+button:hover {
+    background: #222;
+}
+
+
+.btn-export {
+    background: #fff;
+    color: #000;
+    border: 1px solid #000;
+}
+
+.btn-export:hover {
+    background: #f5f5f5;
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+}
+
+#fileName {
+    font-size: 13px;
+    color: #666;
+    margin: -5px 0 15px 0;
+}
+
+hr {
+    border: 0;
+    border-top: 1px solid #eee;
+    margin: 30px 0;
+}
+
+.main-layout {
+    display: flex;
+    gap: 40px;
+}
+
+.feed-column {
+    flex: 1;
+}
+
+.leaderboard-column {
+    width: 250px;
+    background: #f9f9f9;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #eee;
+    height: fit-content;
+}
+
+.level {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.level h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 400;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 5px;
+}
+
+.level button {
+    width: auto;
+    height: 28px;
+    padding: 0 12px;
+    font-size: 12px;
+    background: #f0f0f0;
+    color: #000;
+    border: 1px solid #ddd;
+    margin: 0;
+}
+
+.level button:hover {
+    background: #e5e5e5;
+}
+
+.star-btn {
+    background: #fffbe6 !important;
+    border-color: #ffe58f !important;
+}
+.star-btn:hover {
+    background: #fff1b8 !important;
+}
+
+.leaderboard-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.leaderboard-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    font-size: 14px;
+    border-bottom: 1px dashed #ddd;
+}
+</style>
 </head>
+
 <body>
 
-    <input type="text" id="searchBar" oninput="filterLevels()" placeholder="Search for serious obbies here.">
-    
-    <h2>Leaderboard</h2>
-    <ul id="leaderboard"></ul>
+<h1>Obby Revival Project Hub</h1>
 
-    <h2>Community Obbies</h2>
-    <div id="levels"></div>
+<input id="title" placeholder="title" type="text">
+<input type="file" id="fileInput" accept=".json,.rbxmx,.xml">
+<p id="fileName"></p>
+
+<div class="button-group">
+    <button onclick="uploadLevel()">Upload Level</button>
+    <button class="btn-export" onclick="exportLevel()">Export</button>
+</div>
+
+<hr>
+
+<div class="main-layout">
+    <div class="feed-column">
+        <h2>Community Obbies</h2>
+        <input id="searchBar" class="search-input" placeholder="Search for serious obbies here." type="text" oninput="filterLevels()">
+        <div id="levels"></div>
+    </div>
+
+    <div class="leaderboard-column">
+        <h2>Leaderboard</h2>
+        <ul id="leaderboard" class="leaderboard-list"></ul>
+    </div>
+</div>
 
 <script>
-let currentFileNameForExport = "";
-function handleFileImport(file) {
-    if (!file) return;
+console.log("running...");
 
-    currentFileNameForExport = file.name.replace(".rbxlx", "");
+const SUPABASE_URL = "https://nnqjzkwcliapfmagxgfh.supabase.co";
+const SUPABASE_KEY = "sb_publishable_7YyiJgIDTOjN8Ne7G6avcQ_aGswLuaD";
 
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const xmlText = e.target.result;
-            const parser = new DOMParser();
-            const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-            const obbyNode = xmlDoc.querySelector('Item[class="Folder"][name="Obby"], Item[class="Model"][name="Obby"]');
+document.getElementById("fileInput").addEventListener("change", (e) => {
+    if (e.target.files.length > 0) {
+        const file = e.target.files[0];
+        const sizeStr = file.size < 1024 
+            ? file.size + " B" 
+            : (file.size / 1024).toFixed(1) + " KB";
             
-            let obbyName = "Unknown Obby";
-            let difficulty = "not defined";
-            let creator = "John huper";
-            let serializedData = null;
+        document.getElementById("fileName").innerText = `${file.name} (${sizeStr})`;
+    } else {
+        document.getElementById("fileName").innerText = "";
+    }
+});
 
-            if (obbyNode) {
-                serializedData = serializeInstance(obbyNode);
-                const props = obbyNode.querySelector(':scope > Properties');
-                if (props) {
-                    const nameEl = props.querySelector('string[name="ObbyName"]');
-                    const diffEl = props.querySelector('string[name="ObbyDifficulty"]');
-                    const creatorEl = props.querySelector('string[name="ObbyCreator"]');
-                    
-                    if (nameEl) obbyName = nameEl.textContent.trim();
-                    if (diffEl) difficulty = diffEl.textContent.trim();
-                    if (creatorEl) creator = creatorEl.textContent.trim();
-                }
-            } else {
-                obbyName = currentFileNameForExport || "Unknown Obby";
+async function uploadLevel() {
+    const file = document.getElementById("fileInput").files[0];
+
+    if (!file) {
+        alert("choose file please serious chuds");
+        return;
+    }
+
+    const text = await file.text();
+    let jsonData;
+
+    try {
+        jsonData = JSON.parse(text);
+    } catch (err) {
+        alert("invalid...serious chuds...json file bro...");
+        return;
+    }
+
+    let title = document.getElementById("title").value.trim();
+    if (!title) title = file.name.replace(".json", "");
+
+    const sizeYay = file.size < 1024 
+        ? file.size + " B" 
+        : (file.size / 1024).toFixed(1) + " KB";
+
+    const { data, error } = await supabaseClient
+        .from("levels")
+        .insert({
+            title: title,
+            data: jsonData,
+            stars: 0, 
+            file_size: sizeYay
+        })
+        .select();
+
+    if (error) {
+        console.error("error:", error);
+        alert("error: " + error.message);
+        return;
+    }
+
+    alert("uploaded serious chuds");
+    
+    document.getElementById("title").value = "";
+    document.getElementById("fileInput").value = "";
+    document.getElementById("fileName").innerText = "";
+
+    loadLevels();
+}
+
+
+let currentFileNameForExport = "ExportedObby";
+
+function exportLevel() {
+    const file = document.getElementById("fileInput").files[0];
+    if (!file) {
+        alert("rbxmx file brochacho...sory for that...");
+        return;
+    }
+
+    currentFileNameForExport = file.name.replace(/\.[^/.]+$/, ""); 
+    
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        try {
+            const xmlDoc = new DOMParser().parseFromString(event.target.result, "text/xml");
+            
+            const obbyFolderNode = xmlDoc.querySelector('roblox > Item');
+            if (!obbyFolderNode) {
+                throw new Error("erorrrrrrr!");
             }
+
+            let obbyName = currentFileNameForExport;
+            let difficulty = "unknown cuz idk how to code ts";
+            let creator = "john huper";
+
+            const rootProps = obbyFolderNode.querySelector(':scope > Properties');
+            if (rootProps) {
+                const nameProp = rootProps.querySelector('string[name="Name"]');
+                if (nameProp) obbyName = nameProp.textContent.trim();
+            }
+
+            const serializedData = serializeInstance(obbyFolderNode);
 
             const finalPayload = {
                 "ObbyName": obbyName,
@@ -66,12 +297,13 @@ function handleFileImport(file) {
                 "Data": serializedData
             };
 
+
             const blob = new Blob([JSON.stringify(finalPayload, null, 4)], { type: "application/json" });
             const url = URL.createObjectURL(blob);
             
             const a = document.createElement('a');
             a.href = url;
-            a.download = `${obbyName}.json`;
+            a.download = `${currentFileNameForExport}.json`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -118,15 +350,16 @@ function serializeInstance(node) {
     };
 
     if (isBasePart && propsNode) {
-        const positionNode = propsNode.querySelector('Vector3[name="Position"]');
-        const rotationNode = propsNode.querySelector('Vector3[name="Rotation"]');
+        const cframeNode = propsNode.querySelector('CoordinateFrame[name="CFrame"]');
         const sizeNode = propsNode.querySelector('Vector3[name="size"]') || propsNode.querySelector('Vector3[name="Size"]');
         const colorNode = propsNode.querySelector('Color3[name="Color"]') || propsNode.querySelector('Color3uint8[name="Color3uint8"]');
+        
+        const transform = parseCFrame(cframeNode);
 
         data.Properties = {
             "Size": parseVector3(sizeNode),
-            "Position": positionNode ? parseVector3(positionNode) : { "X": 0, "Y": 0, "Z": 0 },
-            "Rotation": rotationNode ? parseVector3(rotationNode) : { "X": 0, "Y": 0, "Z": 0 },
+            "Position": transform.position,
+            "Rotation": transform.rotation,
             "Color": parseColor3(colorNode)
         };
     }
@@ -149,9 +382,60 @@ function parseVector3(node) {
     const zNode = node.querySelector('Z') || node.querySelector('z');
 
     return {
-        "X": xNode ? Math.round(Number(xNode.textContent) * 1000) / 1000 : 1,
-        "Y": yNode ? Math.round(Number(yNode.textContent) * 1000) / 1000 : 1,
-        "Z": zNode ? Math.round(Number(zNode.textContent) * 1000) / 1000 : 1
+        "X": xNode ? Number(xNode.textContent) : 1,
+        "Y": yNode ? Number(yNode.textContent) : 1,
+        "Z": zNode ? Number(zNode.textContent) : 1
+    };
+}
+
+function parseCFrame(node) {
+    const defaultTransform = {
+        position: { "X": 0, "Y": 0, "Z": 0 },
+        rotation: { "X": 0, "Y": 0, "Z": 0 }
+    };
+    
+    if (!node) return defaultTransform;
+
+    const text = node.textContent.trim();
+    const values = text.split(/\s+/).map(Number);
+    
+    if (values.length < 12) return defaultTransform;
+
+    const x = values[0];
+    const y = values[1];
+    const z = values[2];
+
+    const r00 = values[3],  r01 = values[4],  r02 = values[5];
+    const r10 = values[6],  r11 = values[7],  r12 = values[8];
+    const r20 = values[9],  r21 = values[10], r22 = values[11];
+
+    let rotX = 0, rotY = 0, rotZ = 0;
+
+    if (r02 < 1) {
+        if (r02 > -1) {
+            rotX = Math.atan2(-r12, r22);
+            rotY = Math.asin(r02);
+            rotZ = Math.atan2(-r01, r00);
+        } else { 
+            rotX = -Math.atan2(r10, r11);
+            rotY = -Math.PI / 2;
+            rotZ = 0;
+        }
+    } else { 
+        rotX = Math.atan2(r10, r11);
+        rotY = Math.PI / 2;
+        rotZ = 0;
+    }
+
+    const radToDeg = 180 / Math.PI;
+    
+    return {
+        position: { "X": x, "Y": y, "Z": z },
+        rotation: {
+            "X": Math.round(rotX * radToDeg * 100) / 100,
+            "Y": Math.round(rotY * radToDeg * 100) / 100,
+            "Z": Math.round(rotZ * radToDeg * 100) / 100
+        }
     };
 }
 
@@ -176,6 +460,7 @@ function parseColor3(node) {
         "B": bNode ? Number(bNode.textContent) : 1
     };
 }
+
 
 let allLoadedLevels = [];
 async function loadLevels() {
@@ -240,7 +525,7 @@ async function likeLevel(id) {
     let likedLevels = JSON.parse(localStorage.getItem("liked_levels")) || [];
 
     if (likedLevels.includes(id)) {
-        alert("you cannot");
+        alert("you cannot")
         return;
     }
     const { data: currentLevel, error: fetchError } = await supabaseClient
@@ -256,7 +541,7 @@ async function likeLevel(id) {
     }
 
     if(!('stars' in currentLevel)){
-        alert("ts star error im fixing");
+        alert("ts star error im fixing")
         return;
     }
     const eStars = Number(currentLevel.stars) || 0;
@@ -320,7 +605,7 @@ async function downloadLevel(id) {
 
     if (error || !data) {
         console.error("download error:", error);
-        alert("could not download bruh...");
+        alert("could not download bruh!");
         return;
     }
 
@@ -339,7 +624,6 @@ async function downloadLevel(id) {
     document.body.removeChild(a);
     URL.revokeObjectURL(url); 
 }
-
 
 loadLevels();
 </script>
