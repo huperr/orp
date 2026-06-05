@@ -154,6 +154,43 @@ hr {
     font-size: 14px;
     border-bottom: 1px dashed #ddd;
 }
+
+.forum-section {
+    margin-top: 40px
+}
+..forum-form {
+    background: #f9f9f9;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #eee;
+    margin-bottom: 25px;
+}
+
+.forum-post {
+    padding: 15px;
+    border: 1px solid #eee;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    background: #fff;
+}
+
+.forum-meta {
+    font-size: 12px;
+    color: #777;
+    margin-bottom: 6px;
+}
+
+.forum-username {
+    font-weight: bold;
+    color: #000;
+}
+
+.forum-content {
+    font-size: 14px;
+    line-height: 1.4;
+    white-space: pre-wrap;
+}
+
 </style>
 </head>
 
@@ -184,6 +221,23 @@ hr {
         <ul id="leaderboard" class="leaderboard-list"></ul>
     </div>
 </div>
+
+<hr>
+
+<div class="forum-section">
+    <h2>Community Discussion</h2>
+    
+    <div class="forum-form">
+        <input id="forumUser" placeholder="Username" type="text" style="max-width: 250px;">
+        <textarea id="forumMessage" placeholder="Type your message here..."></textarea>
+        <button onclick="submitPost()" style="max-width: 150px;">Post Comment</button>
+    </div>
+
+    <div id="forumPosts">
+        <p style="color: #888; font-size: 14px; text-align: center;">Loading discussions...</p>
+    </div>
+</div>
+
 
 <script>
 console.log("running...");
@@ -633,8 +687,81 @@ async function downloadLevel(id) {
     document.body.removeChild(a);
     URL.revokeObjectURL(url); 
 }
+//forum thing idk if it works
+async function loadPosts() {
+    const { data, error } = await supabaseClient
+        .from("forum_posts")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-loadLevels();
+    if (error) {
+        console.error("Forum fetch error:", error);
+        document.getElementById("forumPosts").innerHTML = `<p style="color: red; font-size: 14px;">Failed to load posts...</p>`;
+        return;
+    }
+
+    const forumContainer = document.getElementById("forumPosts");
+    forumContainer.innerHTML = "";
+
+    if (data.length === 0) {
+        forumContainer.innerHTML = `<p style="color: #888; font-size: 14px; text-align: center;">No comments yet. Be the first serious chud to post!</p>`;
+        return;
+    }
+
+    data.forEach(post => {
+        const postDiv = document.createElement("div");
+        postDiv.className = "forum-post";
+        
+        const timestamp = new Date(post.created_at).toLocaleString();
+
+        postDiv.innerHTML = `
+            <div class="forum-meta">
+                <span class="forum-username">${escapeHTML(post.username)}</span> • <span>${timestamp}</span>
+            </div>
+            <div class="forum-content">${escapeHTML(post.message)}</div>
+        `;
+        forumContainer.appendChild(postDiv);
+    });
+}
+
+async function submitPost() {
+    let username = document.getElementById("forumUser").value.trim();
+    const message = document.getElementById("forumMessage").value.trim();
+
+    if (!message) {
+        alert("Write a message first bro");
+        return;
+    }
+    if (!username) username = "Anonymous Chud";
+
+    const { error } = await supabaseClient
+        .from("forum_posts")
+        .insert({
+            username: username,
+            message: message
+        });
+
+    if (error) {
+        console.error("Forum post error:", error);
+        alert("Could not submit post: " + error.message);
+        return;
+    }
+
+    document.getElementById("forumMessage").value = "";
+    loadPosts();
+}
+
+function escapeHTML(str) {
+    return str.replace(/[&<>'"]/g, 
+        tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+    );
+}
+async function niceSite() {
+    await loadLevels();
+    await loadPosts();
+}
+
+niceSite();
 </script>
 
 </body>
