@@ -40,7 +40,7 @@ input[type="text"], button {
 
 textarea {
     padding: 10px;
-    margin-bottom: 10px;
+    margin-bottom: 5px; /* Shrunk slightly to leave room for the counter */
     border: 1px solid #ccc;
     border-radius: 4px;
     resize: vertical;
@@ -204,6 +204,20 @@ hr {
     white-space: pre-wrap;
 }
 
+/* Character Counter Styling */
+.char-counter {
+    font-size: 12px;
+    color: #777;
+    text-align: right;
+    margin-bottom: 15px;
+}
+
+.char-counter.warning {
+    color: #de350b;
+    font-weight: bold;
+}
+
+/* Pagination Styles */
 .pagination-controls {
     display: flex;
     justify-content: center;
@@ -276,8 +290,9 @@ hr {
     <h2>Community Discussion</h2>
     
     <div class="forum-form">
-        <input id="forumUser" placeholder="your name" type="text" style="max-width: 250px;">
-        <textarea id="forumMessage" placeholder="message here"></textarea>
+        <input id="forumUser" placeholder="your name" type="text" style="max-width: 250px;" maxlength="50">
+        <textarea id="forumMessage" placeholder="message here" maxlength="500" oninput="updateCharCount()"></textarea>
+        <div id="charCounter" class="char-counter">0 / 500 characters</div>
         <button onclick="submitPost()" style="max-width: 150px;">post</button>
     </div>
 
@@ -301,7 +316,9 @@ const SUPABASE_KEY = "sb_publishable_7YyiJgIDTOjN8Ne7G6avcQ_aGswLuaD";
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// Pagination Settings
 const ITEMS_PER_PAGE = 5; 
+const MAX_POST_LENGTH = 500;
 let currentLevelsPage = 1;
 let currentForumPage = 1;
 
@@ -648,7 +665,6 @@ function renderLevelsList() {
         div.appendChild(item);
     });
 
-
     document.getElementById("levelsPageIndicator").innerText = `Page ${currentLevelsPage} of ${totalPages}`;
     document.getElementById("prevLevelsBtn").disabled = currentLevelsPage === 1;
     document.getElementById("nextLevelsBtn").disabled = currentLevelsPage === totalPages;
@@ -782,6 +798,22 @@ async function downloadLevel(id) {
     URL.revokeObjectURL(url); 
 }
 
+// Live character counter updates
+function updateCharCount() {
+    const textarea = document.getElementById("forumMessage");
+    const counter = document.getElementById("charCounter");
+    const currentLength = textarea.value.length;
+    
+    counter.innerText = `${currentLength} / ${MAX_POST_LENGTH} characters`;
+    
+    // Add warning color if getting near full capacity
+    if (currentLength >= MAX_POST_LENGTH - 30) {
+        counter.classList.add("warning");
+    } else {
+        counter.classList.remove("warning");
+    }
+}
+
 async function loadPosts() {
     const { data, error } = await supabaseClient
         .from("forum_posts")
@@ -851,6 +883,13 @@ async function submitPost() {
         alert("Write a message first bro");
         return;
     }
+    
+    // Double safeguard check in JS if they bypass HTML attributes
+    if (message.length > MAX_POST_LENGTH) {
+        alert("Too long! Limit is 500 characters.");
+        return;
+    }
+    
     if (!username) username = "Anonymous Chud";
 
     const { error } = await supabaseClient
@@ -867,6 +906,7 @@ async function submitPost() {
     }
 
     document.getElementById("forumMessage").value = "";
+    updateCharCount(); // reset character counter string to 0
     currentForumPage = 1; 
     loadPosts();
 }
