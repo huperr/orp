@@ -40,7 +40,7 @@ input[type="text"], button {
 
 textarea {
     padding: 10px;
-    margin-bottom: 5px; /* Shrunk slightly to leave room for the counter */
+    margin-bottom: 5px;
     border: 1px solid #ccc;
     border-radius: 4px;
     resize: vertical;
@@ -204,7 +204,7 @@ hr {
     white-space: pre-wrap;
 }
 
-/* Character Counter Styling */
+
 .char-counter {
     font-size: 12px;
     color: #777;
@@ -291,8 +291,8 @@ hr {
     
     <div class="forum-form">
         <input id="forumUser" placeholder="your name" type="text" style="max-width: 250px;" maxlength="50">
-        <textarea id="forumMessage" placeholder="message here" maxlength="500" oninput="updateCharCount()"></textarea>
-        <div id="charCounter" class="char-counter">0 / 500 characters</div>
+        <textarea id="forumMessage" placeholder="message here" maxlength="250" oninput="updateCharCount()"></textarea>
+        <div id="charCounter" class="char-counter">0 / 250 characters</div>
         <button onclick="submitPost()" style="max-width: 150px;">post</button>
     </div>
 
@@ -797,16 +797,14 @@ async function downloadLevel(id) {
     document.body.removeChild(a);
     URL.revokeObjectURL(url); 
 }
-
-// Live character counter updates
+es
 function updateCharCount() {
     const textarea = document.getElementById("forumMessage");
     const counter = document.getElementById("charCounter");
     const currentLength = textarea.value.length;
     
     counter.innerText = `${currentLength} / ${MAX_POST_LENGTH} characters`;
-    
-    // Add warning color if getting near full capacity
+
     if (currentLength >= MAX_POST_LENGTH - 30) {
         counter.classList.add("warning");
     } else {
@@ -884,7 +882,6 @@ async function submitPost() {
         return;
     }
     
-    // Double safeguard check in JS if they bypass HTML attributes
     if (message.length > MAX_POST_LENGTH) {
         alert("Too long! Limit is 500 characters.");
         return;
@@ -906,7 +903,7 @@ async function submitPost() {
     }
 
     document.getElementById("forumMessage").value = "";
-    updateCharCount(); // reset character counter string to 0
+    updateCharCount(); 
     currentForumPage = 1; 
     loadPosts();
 }
