@@ -23,16 +23,28 @@ h1, h2, h3 {
 h1 { font-size: 24px; }
 h2 { font-size: 18px; margin-top: 40px; }
 
-input[type="text"], button {
+input[type="text"], button, textarea {
     font-family: inherit;
     font-size: 14px;
     width: 100%;
+    box-sizing: border-box;
+}
+
+input[type="text"], button {
     height: 40px;
     padding: 0 10px;
     margin-bottom: 10px;
     border: 1px solid #ccc;
     border-radius: 4px;
-    box-sizing: border-box;
+}
+
+textarea {
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    resize: vertical;
+    min-height: 80px;
 }
 
 input[type="file"] {
@@ -158,7 +170,8 @@ hr {
 .forum-section {
     margin-top: 40px
 }
-..forum-form {
+
+.forum-form {
     background: #f9f9f9;
     padding: 20px;
     border-radius: 8px;
@@ -191,6 +204,35 @@ hr {
     white-space: pre-wrap;
 }
 
+.pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.pagination-controls button {
+    width: auto;
+    height: 32px;
+    padding: 0 15px;
+    background: #f0f0f0;
+    color: #000;
+    border: 1px solid #ddd;
+}
+
+.pagination-controls button:disabled {
+    background: #fafafa;
+    color: #ccc;
+    border-color: #eee;
+    cursor: not-allowed;
+}
+
+.pagination-controls span {
+    font-size: 14px;
+    color: #666;
+}
+
 </style>
 </head>
 
@@ -214,6 +256,12 @@ hr {
         <h2>Community Obbies</h2>
         <input id="searchBar" class="search-input" placeholder="Search for serious obbies here." type="text" oninput="filterLevels()">
         <div id="levels"></div>
+        
+        <div class="pagination-controls">
+            <button id="prevLevelsBtn" onclick="changeLevelsPage(-1)">Previous</button>
+            <span id="levelsPageIndicator">Page 1 of 1</span>
+            <button id="nextLevelsBtn" onclick="changeLevelsPage(1)">Next</button>
+        </div>
     </div>
 
     <div class="leaderboard-column">
@@ -236,6 +284,12 @@ hr {
     <div id="forumPosts">
         <p style="color: #888; font-size: 14px; text-align: center;">loading bro</p>
     </div>
+
+    <div class="pagination-controls">
+        <button id="prevForumBtn" onclick="changeForumPage(-1)">Previous</button>
+        <span id="forumPageIndicator">Page 1 of 1</span>
+        <button id="nextForumBtn" onclick="changeForumPage(1)">Next</button>
+    </div>
 </div>
 
 
@@ -246,6 +300,14 @@ const SUPABASE_URL = "https://nnqjzkwcliapfmagxgfh.supabase.co";
 const SUPABASE_KEY = "sb_publishable_7YyiJgIDTOjN8Ne7G6avcQ_aGswLuaD";
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const ITEMS_PER_PAGE = 5; 
+let currentLevelsPage = 1;
+let currentForumPage = 1;
+
+let allLoadedLevels = [];
+let filteredLevels = [];
+let allLoadedPosts = [];
 
 document.getElementById("fileInput").addEventListener("change", (e) => {
     if (e.target.files.length > 0) {
@@ -343,13 +405,11 @@ function exportLevel() {
                 if (nameProp) obbyName = nameProp.textContent.trim();
             }
 
-        //thing idk
             const userChoice = confirm("Exporter is still work in progress and has many bugs. Do you want to proceed?");
             if (!userChoice) {
                 console.log("ok...man");
                 return; 
             }
-            //continue? ok
 
             const serializedData = serializeInstance(obbyFolderNode);
 
@@ -525,7 +585,6 @@ function parseColor3(node) {
 }
 
 
-let allLoadedLevels = [];
 async function loadLevels() {
     const { data, error } = await supabaseClient
         .from("levels")
@@ -537,21 +596,35 @@ async function loadLevels() {
         return;
     }
     allLoadedLevels = data;
+    filteredLevels = data; 
+    currentLevelsPage = 1; 
     document.getElementById("searchBar").value = "";
-    renderLevelsList(allLoadedLevels);
+    
+    renderLevelsList();
     loadLeaderboard();
 }
 
-function renderLevelsList(levelsToRender) {
+function renderLevelsList() {
     const div = document.getElementById("levels");
     div.innerHTML = "";
 
-    if (levelsToRender.length === 0) {
+    if (filteredLevels.length === 0) {
         div.innerHTML = `<p style="color: #888; font-size: 14px; text-align: center; margin-top: 20px;">no obbies found...</p>`;
+        document.getElementById("levelsPageIndicator").innerText = "Page 0 of 0";
+        document.getElementById("prevLevelsBtn").disabled = true;
+        document.getElementById("nextLevelsBtn").disabled = true;
         return;
     }
 
-    levelsToRender.forEach(level => {
+    const totalPages = Math.ceil(filteredLevels.length / ITEMS_PER_PAGE);
+    if (currentLevelsPage > totalPages) currentLevelsPage = totalPages;
+    if (currentLevelsPage < 1) currentLevelsPage = 1;
+
+    const startIdx = (currentLevelsPage - 1) * ITEMS_PER_PAGE;
+    const endIdx = startIdx + ITEMS_PER_PAGE;
+    const paginatedLevels = filteredLevels.slice(startIdx, endIdx);
+
+    paginatedLevels.forEach(level => {
         const starsCount = level.stars || 0;
         const item = document.createElement("div");
         item.className = "level";
@@ -574,14 +647,25 @@ function renderLevelsList(levelsToRender) {
 
         div.appendChild(item);
     });
+
+
+    document.getElementById("levelsPageIndicator").innerText = `Page ${currentLevelsPage} of ${totalPages}`;
+    document.getElementById("prevLevelsBtn").disabled = currentLevelsPage === 1;
+    document.getElementById("nextLevelsBtn").disabled = currentLevelsPage === totalPages;
+}
+
+function changeLevelsPage(direction) {
+    currentLevelsPage += direction;
+    renderLevelsList();
 }
 
 function filterLevels() {
     const query = document.getElementById("searchBar").value.toLowerCase().trim();
-    const filtered = allLoadedLevels.filter(level => {
+    filteredLevels = allLoadedLevels.filter(level => {
         return level.title && level.title.toLowerCase().includes(query);
     });
-    renderLevelsList(filtered);
+    currentLevelsPage = 1; 
+    renderLevelsList();
 }
 
 async function likeLevel(id) {
@@ -625,7 +709,17 @@ async function likeLevel(id) {
     likedLevels.push(id);
     localStorage.setItem("liked_levels", JSON.stringify(likedLevels));
 
-    loadLevels();
+    const { data } = await supabaseClient
+        .from("levels")
+        .select("*")
+        .order("created_at", { ascending: false });
+    if(data) {
+        allLoadedLevels = data;
+        const query = document.getElementById("searchBar").value.toLowerCase().trim();
+        filteredLevels = allLoadedLevels.filter(level => level.title && level.title.toLowerCase().includes(query));
+        renderLevelsList();
+        loadLeaderboard();
+    }
 }
 
 async function loadLeaderboard() {
@@ -687,7 +781,7 @@ async function downloadLevel(id) {
     document.body.removeChild(a);
     URL.revokeObjectURL(url); 
 }
-//forum thing idk if it works
+
 async function loadPosts() {
     const { data, error } = await supabaseClient
         .from("forum_posts")
@@ -700,15 +794,31 @@ async function loadPosts() {
         return;
     }
 
+    allLoadedPosts = data;
+    renderForumList();
+}
+
+function renderForumList() {
     const forumContainer = document.getElementById("forumPosts");
     forumContainer.innerHTML = "";
 
-    if (data.length === 0) {
+    if (allLoadedPosts.length === 0) {
         forumContainer.innerHTML = `<p style="color: #888; font-size: 14px; text-align: center;">No comments yet. Be the first serious chud to post!</p>`;
+        document.getElementById("forumPageIndicator").innerText = "Page 0 of 0";
+        document.getElementById("prevForumBtn").disabled = true;
+        document.getElementById("nextForumBtn").disabled = true;
         return;
     }
 
-    data.forEach(post => {
+    const totalPages = Math.ceil(allLoadedPosts.length / ITEMS_PER_PAGE);
+    if (currentForumPage > totalPages) currentForumPage = totalPages;
+    if (currentForumPage < 1) currentForumPage = 1;
+
+    const startIdx = (currentForumPage - 1) * ITEMS_PER_PAGE;
+    const endIdx = startIdx + ITEMS_PER_PAGE;
+    const paginatedPosts = allLoadedPosts.slice(startIdx, endIdx);
+
+    paginatedPosts.forEach(post => {
         const postDiv = document.createElement("div");
         postDiv.className = "forum-post";
         
@@ -722,6 +832,15 @@ async function loadPosts() {
         `;
         forumContainer.appendChild(postDiv);
     });
+
+    document.getElementById("forumPageIndicator").innerText = `Page ${currentForumPage} of ${totalPages}`;
+    document.getElementById("prevForumBtn").disabled = currentForumPage === 1;
+    document.getElementById("nextForumBtn").disabled = currentForumPage === totalPages;
+}
+
+function changeForumPage(direction) {
+    currentForumPage += direction;
+    renderForumList();
 }
 
 async function submitPost() {
@@ -748,6 +867,7 @@ async function submitPost() {
     }
 
     document.getElementById("forumMessage").value = "";
+    currentForumPage = 1; 
     loadPosts();
 }
 
@@ -756,6 +876,7 @@ function escapeHTML(str) {
         tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
     );
 }
+
 async function niceSite() {
     await loadLevels();
     await loadPosts();
